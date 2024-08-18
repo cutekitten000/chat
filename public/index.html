@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat em Tempo Real</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div id="user-form" class="username-form">
+            <input id="username" type="text" placeholder="Digite seu nome..." required />
+            <button id="enter-chat">Entrar no Chat</button>
+        </div>
+        <div id="chat" class="chat-box hidden">
+            <ul id="messages"></ul>
+            <form id="form" action="">
+                <input id="input" autocomplete="off" placeholder="Digite uma mensagem..." /><button>Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const usernameInput = document.getElementById('username');
+        const userForm = document.getElementById('user-form');
+        const chatBox = document.getElementById('chat');
+
+        document.getElementById('enter-chat').addEventListener('click', function() {
+            const username = usernameInput.value.trim();
+            if (username) {
+                socket.emit('set username', username);
+                userForm.classList.add('hidden');
+                chatBox.classList.remove('hidden');
+            }
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', function(msg) {
+            const item = document.createElement('li');
+            item.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
+            document.getElementById('messages').appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        socket.on('user connected', function(msg) {
+            const item = document.createElement('li');
+            item.className = 'info';
+            item.textContent = msg;
+            document.getElementById('messages').appendChild(item);
+        });
+
+        socket.on('user disconnected', function(msg) {
+            const item = document.createElement('li');
+            item.className = 'info';
+            item.textContent = msg;
+            document.getElementById('messages').appendChild(item);
+        });
+    </script>
+</body>
+</html>
